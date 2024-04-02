@@ -20,6 +20,8 @@ Usage:
 
 import sqlite3
 import click
+from terminaltables import SingleTable
+
 
 
 DB_NAME = 'tasks.db'
@@ -55,18 +57,44 @@ def main():
 
 @main.command()
 @click.option('--title', '-tl', prompt=True,
-               help='title for task')
+               help='Title for the task. [required]')
 @click.option('--description', '-de', prompt=False, 
-              help='add description task [optional]')
-# TODO add help for 'priority' and 'due_date'
-@click.option('--priority', '-pr', prompt=True, default=0)
-@click.option('--due_date', '-dd', prompt=False, default=None)
+              help='Description for the task. [optional]')
+@click.option('--priority', '-pr', prompt=True, default=0,
+              help='Priority for the task (0 - 5). [required]. default=0')
+@click.option('--due_date', '-dd', prompt=False, default=None,
+              help='Due date for the task. [optional]')
+
 def add_task(title, description, priority, due_date):
-    """Add tasks"""
-    click.echo(title)
-    click.echo(description)
-    click.echo(priority)
-    click.echo(due_date)
+    """
+    Add a new task.
+
+    This command allows users to add a new task to the to-do list.
+    The user is prompted to enter the title of the task, and optionally, a description, priority, and due date.
+    The task is then added to the list and displayed in a table format, along with the provided information.
+
+    Args:
+        title (str): The title of the task.
+        description (str, optional): The description of the task (optional).
+        priority (int): The priority of the task.
+        due_date (str, optional): The due date of the task (optional).
+
+    Example:
+        taskmaster add-task --title "Finish project" --description "Complete the final report" --priority 1 --due_date "2024-04-10"
+        
+    """
+
+    user_data = [
+        ['Task Information', 'Details'],
+        ['Task Title', title],
+        ['Task Description', description],
+        ['Task Priority', priority],
+        ['Task Due Date', due_date],
+    ]
+
+    tbl = SingleTable(user_data)
+    click.echo(tbl.table)
+    click.secho('Add Task successfully', fg='green')
 
 if __name__ == '__main__':
     main()

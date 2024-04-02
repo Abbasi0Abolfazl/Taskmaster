@@ -46,6 +46,17 @@ def create_table():
     conn.close()
 
 
+def insert_task(title, description, priority, due_date):
+    """Insert a new task into the database."""
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+    c.execute("""
+            INSERT INTO tasks (title, description, due_date, priority, created_at, updated_at) 
+            VALUES (?, ?, ?, ?, ?, ?)""", (title, description, due_date, priority, datetime.now(), datetime.now()))
+    conn.commit()
+    conn.close()
+
+
 @click.group()
 @click.version_option(version='0.1', prog_name='Taskmaster')
 
@@ -95,14 +106,7 @@ def add_task(title, description, priority, due_date):
 
     tbl = SingleTable(user_data)
     click.echo(tbl.table)
-
-    conn = sqlite3.connect(DB_NAME)
-    c = conn.cursor()
-    c.execute("""
-            INSERT INTO tasks (title, description, due_date, priority, created_at, updated_at) 
-            VALUES (?, ?, ?, ?, ?, ?)""", (title, description, due_date, priority, datetime.now(), datetime.now(),))
-    conn.commit()
-    conn.close()
+    insert_task(title, description, priority, due_date)
     click.secho('Add Task successfully', fg='green')
 
 if __name__ == '__main__':

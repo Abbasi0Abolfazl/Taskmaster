@@ -35,6 +35,8 @@ def create_table():
                 "description"	TEXT,
                 "due_date"	TIMESTAMP,
                 "priority"	INTEGER DEFAULT 0,
+                "created_at"	TIMESTAMP,
+                "updated_at"	TIMESTAMP,
                 PRIMARY KEY("id")
             );''')
     conn.commit()

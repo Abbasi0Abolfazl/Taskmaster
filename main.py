@@ -18,8 +18,8 @@ Usage:
   taskmaster update <task_id> <new_task>: Update the task with the specified ID to a new task.
 """
 
-import click
 import sqlite3
+import click
 
 
 DB_NAME = 'tasks.db'
@@ -50,7 +50,23 @@ def main():
     """
     Main function to execute the Taskmaster CLI.
     """
-    pass
+    create_table()
+
+
+@main.command()
+@click.option('--title', '-tl', prompt=True,
+               help='title for task')
+@click.option('--description', '-de', prompt=False, 
+              help='add description task [optional]')
+# TODO add help for 'priority' and 'due_date'
+@click.option('--priority', '-pr', prompt=True, default=0)
+@click.option('--due_date', '-dd', prompt=False, default=None)
+def add_task(title, description, priority, due_date):
+    """Add tasks"""
+    click.echo(title)
+    click.echo(description)
+    click.echo(priority)
+    click.echo(due_date)
 
 if __name__ == '__main__':
     main()

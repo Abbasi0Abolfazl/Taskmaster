@@ -18,8 +18,27 @@ Usage:
   taskmaster update <task_id> <new_task>: Update the task with the specified ID to a new task.
 """
 
-
 import click
+import sqlite3
+
+
+DB_NAME = 'tasks.db'
+
+def create_table():
+    """create DB and tasks table"""
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+    c.execute('''
+            CREATE TABLE IF NOT EXISTS "tasks" (
+                "id"	INTEGER,
+                "title"	TEXT NOT NULL,
+                "description"	TEXT,
+                "due_date"	TIMESTAMP,
+                "priority"	INTEGER DEFAULT 0,
+                PRIMARY KEY("id")
+            );''')
+    conn.commit()
+    conn.close()
 
 
 @click.group()

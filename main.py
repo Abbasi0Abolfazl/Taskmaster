@@ -21,6 +21,7 @@ Usage:
 import sqlite3
 import click
 from terminaltables import SingleTable
+from datetime import datetime
 
 
 
@@ -94,6 +95,14 @@ def add_task(title, description, priority, due_date):
 
     tbl = SingleTable(user_data)
     click.echo(tbl.table)
+
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+    c.execute("""
+            INSERT INTO tasks (title, description, due_date, priority, created_at, updated_at) 
+            VALUES (?, ?, ?, ?, ?, ?)""", (title, description, due_date, priority, datetime.now(), datetime.now(),))
+    conn.commit()
+    conn.close()
     click.secho('Add Task successfully', fg='green')
 
 if __name__ == '__main__':

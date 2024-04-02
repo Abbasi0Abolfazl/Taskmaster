@@ -62,7 +62,7 @@ def insert_task(title, description, priority, due_date):
 
 def main():
     """
-    Main function to execute the Taskmaster CLI.
+    Taskmaster - Manage your to-do list from the command line.
     """
     create_table()
 

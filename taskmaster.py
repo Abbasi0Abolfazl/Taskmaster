@@ -11,12 +11,7 @@ Commands:
   - list: List all tasks currently in the to-do list.
   - update: Update the task with the specified ID to a new task.
 
-Usage:
-  taskmaster add <task>: Add a new task.
-  taskmaster remove <task_id>: Remove the task with the specified ID.
-  taskmaster list: List all tasks.
-  taskmaster update <task_id> <new_task>: Update the task with the specified ID to a new task.
-"""
+  """
 
 import sqlite3
 from datetime import datetime

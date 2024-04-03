@@ -72,7 +72,7 @@ def select_all_tasks() -> list:
             cursor.execute("SELECT * FROM tasks")
             tasks = cursor.fetchall()
     except sqlite3.Error as e:
-        print("Error retrieving tasks:", e)
+        click.secho('Error retrieving tasks:', e, fg='red')
     return tasks
 
 
@@ -101,8 +101,67 @@ def delete_task(task_id: int) -> None:
             # Task doesn't exist
             click.secho('Task ID does not exist', fg='red')
     except sqlite3.Error as e:
-        print("Error deleting task:", e)
+        click.secho('Error deleting task:', e, fg='red')
 
+
+
+def update_task(task_id: int, query, parameters) -> None:
+    """
+    Update a task in the database.
+
+    Args:
+        task_id (int): The ID of the task to be updated.
+        new_title (str, optional): The new title for the task.
+        new_description (str, optional): The new description for the task.
+        new_priority (int, optional): The new priority for the task.
+        new_due_date (str, optional): The new due date for the task.
+    """
+    try:
+        with sqlite3.connect(DB_NAME) as conn:
+            cursor = conn.cursor()
+            
+            # task ID exists
+            cursor.execute("SELECT * FROM tasks WHERE id = ?", (task_id,))
+            task = cursor.fetchone()
+            
+            if task:
+                cursor.execute(query, tuple(parameters))
+                conn.commit()
+                click.secho('Task updated successfully', fg='green')
+            else:
+                # Task doesn't exist
+                click.secho('Task ID does not exist', fg='red')
+    
+    except sqlite3.Error as e:
+        click.secho('Error updating task:', e, fg='red')
+
+
+def generate_update_query(updates: dict) -> tuple:
+    """
+    Generate the SQL update query and parameters based on the provided updates.
+
+    Args:
+        updates (dict): Dictionary containing the updates.
+
+    Returns:
+        tuple: Tuple containing the SQL update query and parameters.
+    """
+    if not updates:
+        return None, None
+
+    update_fields = []
+    update_params = []
+
+    for field, value in updates.items():
+        update_fields.append(f"{field} = ?")
+        update_params.append(value)
+
+    # Add updated_at
+    update_fields.append("updated_at = ?")
+    update_params.append(datetime.now())
+
+    query = "UPDATE tasks SET " + ', '.join(update_fields) + " WHERE id = ?"
+    return query, tuple(update_params)
 
 
 @click.group()
@@ -181,7 +240,7 @@ def add(title: str, description: str, priority: int, due_date: str) -> None:
     click.secho('Add Task successfully', fg='green')
 
 
-@main.command() 
+@main.command()
 def show() -> None:
     """
     Show all tasks.
@@ -215,6 +274,48 @@ def delete(task_id: int) -> None:
         task_id (int): The ID of the task to be deleted.
     """
     delete_task(task_id)
+
+
+
+@main.command()
+@click.option('--task_id', '-id', prompt=True, type=int, help='ID of the task to be updated.')
+@click.option('--new_title', '-nt', prompt=False, help='New title for the task.')
+@click.option('--new_description', '-nd', prompt=False, default=None, help='New description for the task.')
+@click.option('--new_priority', '-np', prompt=False, type=int, help='New priority for the task (0 - 5).')
+@click.option('--new_due_date', '-ndd', prompt=False, default=None, help='New due date for the task.')
+def update(task_id: int, new_title: str, new_description: str, new_priority: int, new_due_date: str) -> None:
+    """
+    Update a task.
+
+    This command allows users to update a task in the to-do list by specifying its ID.
+    Users can provide new values for the title, description, priority, and due date.
+
+    Args:
+        task_id (int): The ID of the task to be updated.
+        new_title (str): The new title for the task.
+        new_description (str, optional): The new description for the task.
+        new_priority (int): The new priority for the task.
+        new_due_date (str, optional): The new due date for the task.
+    """
+    if new_due_date and not validate_due_date(new_due_date):
+        click.secho('[!] Invalid due date format. Please use YYYY-MM-DD format.', fg='red')
+        return
+    
+    updates = {
+        'title': new_title,
+        'description': new_description,
+        'due_date': new_due_date,
+        'priority': new_priority
+    }
+
+    query, params = generate_update_query({k: v for k, v in updates.items() if v is not None})
+    if not query:
+        click.secho('No updates provided', fg='red')
+        return
+
+    params += (task_id,)
+    update_task(task_id, query, params)
+
 
 
 if __name__ == '__main__':

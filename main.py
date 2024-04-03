@@ -46,7 +46,7 @@ def create_table() -> None:
     conn.close()
 
 
-def insert_task(title, description, priority, due_date) -> None:
+def insert_task(title: str, description: str, priority: int, due_date: str) -> None:
     """Insert a new task into the database."""
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
@@ -86,6 +86,24 @@ def main():
     create_table()
 
 
+def validate_due_date(due_date: str) -> bool:
+    """
+    Validate the due date format.
+
+    Args:
+        due_date (str): The due date string.
+
+    Returns:
+        bool: True if the due date format is valid, False otherwise.
+    """
+    try:
+        if due_date:
+            datetime.strptime(due_date, '%Y-%m-%d')
+        return True
+    except ValueError:
+        return False
+    
+
 @main.command()
 @click.option('--title', '-tl', prompt=True,
                help='Title for the task. [required]')
@@ -114,6 +132,10 @@ def add_task(title, description, priority, due_date) -> None:
         taskmaster add-task --title "Finish project" --description "Complete the final report" --priority 1 --due_date "2024-04-10"
         
     """
+
+    if due_date and not validate_due_date(due_date):
+        click.secho('[!] Invalid due date format. Please use YYYY-MM-DD format.', fg='red')
+        return
 
     user_data = [
         ['Task Information', 'Details'],

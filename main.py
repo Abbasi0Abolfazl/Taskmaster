@@ -19,15 +19,15 @@ Usage:
 """
 
 import sqlite3
+from datetime import datetime
 import click
 from terminaltables import SingleTable
-from datetime import datetime
 
 
 
 DB_NAME = 'tasks.db'
 
-def create_table():
+def create_table() -> None:
     """create DB and tasks table"""
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
@@ -46,15 +46,34 @@ def create_table():
     conn.close()
 
 
-def insert_task(title, description, priority, due_date):
+def insert_task(title, description, priority, due_date) -> None:
     """Insert a new task into the database."""
     conn = sqlite3.connect(DB_NAME)
-    c = conn.cursor()
-    c.execute("""
+    cursor = conn.cursor()
+    cursor.execute("""
             INSERT INTO tasks (title, description, due_date, priority, created_at, updated_at) 
-            VALUES (?, ?, ?, ?, ?, ?)""", (title, description, due_date, priority, datetime.now(), datetime.now()))
+            VALUES (?, ?, ?, ?, ?, ?)""", 
+            (title, description, due_date, priority, datetime.now(), datetime.now()))
     conn.commit()
     conn.close()
+
+
+def select_all_tasks() -> list:
+    """
+    Retrieve all tasks from the database.
+
+    Returns:
+        list of tuples: List of tuples representing all tasks in the database.
+    """
+    tasks = []
+    try:
+        with sqlite3.connect(DB_NAME) as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM tasks")
+            tasks = cursor.fetchall()
+    except sqlite3.Error as e:
+        print("Error retrieving tasks:", e)
+    return tasks
 
 
 @click.group()
@@ -77,7 +96,7 @@ def main():
 @click.option('--due_date', '-dd', prompt=False, default=None,
               help='Due date for the task. [optional]')
 
-def add_task(title, description, priority, due_date):
+def add_task(title, description, priority, due_date) -> None:
     """
     Add a new task.
 
@@ -104,10 +123,32 @@ def add_task(title, description, priority, due_date):
         ['Task Due Date', due_date],
     ]
 
+    # Create SingleTable instance
     tbl = SingleTable(user_data)
-    click.echo(tbl.table)
+    click.echo(tbl.table)   
     insert_task(title, description, priority, due_date)
     click.secho('Add Task successfully', fg='green')
+
+
+@main.command()
+def show_tasks() -> None:
+    """
+    Show all tasks.
+
+    This function retrieves all tasks from the database and displays them in a tabular format.
+    """
+
+    all_tasks = select_all_tasks()
+
+    # Prepare data for SingleTable
+    table_data = [
+        ('ID', 'Title', 'Description', 'Priority', 'Due Date', 'Created At', 'Updated At')
+        ]
+    table_data.extend(all_tasks)
+
+    # Create SingleTable instance
+    tbl = SingleTable(table_data)
+    click.echo(tbl.table)
 
 if __name__ == '__main__':
     main()

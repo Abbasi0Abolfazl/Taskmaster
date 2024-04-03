@@ -76,6 +76,35 @@ def select_all_tasks() -> list:
     return tasks
 
 
+def delete_task(task_id: int) -> None:
+    """
+    Delete a task from the database.
+
+    Args:
+        task_id (int): The ID of the task to be deleted.
+    """
+    try:
+        conn = sqlite3.connect(DB_NAME)
+        cursor = conn.cursor()
+        
+        # Check if task ID exists
+        cursor.execute("SELECT * FROM tasks WHERE id = ?", (task_id,))
+        task = cursor.fetchone()
+        
+        if task:
+            # Task exists, proceed with deletion
+            cursor.execute("DELETE FROM tasks WHERE id = ?", (task_id,))
+            conn.commit()
+            conn.close()
+            click.secho('Task deleted successfully', fg='green')
+        else:
+            # Task doesn't exist
+            click.secho('Task ID does not exist', fg='red')
+    except sqlite3.Error as e:
+        print("Error deleting task:", e)
+
+
+
 @click.group()
 @click.version_option(version='0.1', prog_name='Taskmaster')
 
@@ -114,7 +143,7 @@ def validate_due_date(due_date: str) -> bool:
 @click.option('--due_date', '-dd', prompt=False, default=None,
               help='Due date for the task. [optional]')
 
-def add_task(title, description, priority, due_date) -> None:
+def add(title: str, description: str, priority: int, due_date: str) -> None:
     """
     Add a new task.
 
@@ -152,8 +181,8 @@ def add_task(title, description, priority, due_date) -> None:
     click.secho('Add Task successfully', fg='green')
 
 
-@main.command()
-def show_tasks() -> None:
+@main.command() 
+def show() -> None:
     """
     Show all tasks.
 
@@ -171,6 +200,22 @@ def show_tasks() -> None:
     # Create SingleTable instance
     tbl = SingleTable(table_data)
     click.echo(tbl.table)
+
+
+@main.command()
+@click.option('--task_id', '-id', prompt=True, type=int,
+              help='ID of the task to be deleted. [required]')
+def delete(task_id: int) -> None:
+    """
+    Delete a task by its ID.
+
+    This command allows users to delete a task from the to-do list by specifying its ID.
+
+    Args:
+        task_id (int): The ID of the task to be deleted.
+    """
+    delete_task(task_id)
+
 
 if __name__ == '__main__':
     main()
